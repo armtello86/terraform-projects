@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "project" {
+  description = "Name of the project"
+  type = string
+  default = "geek-trivia"
+}
+
 variable "environment" {
   description = "Environment name (dev, uat, prod)"
   type        = string

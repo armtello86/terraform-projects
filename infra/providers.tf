@@ -25,7 +25,7 @@ provider "aws" {
   # One block replaces remembering to tag 60+ resources by hand.
   default_tags {
     tags = {
-      Project     = "geek-trivia"
+      Project     = var.project
       Environment = var.environment
       ManagedBy   = "terraform"
     }
