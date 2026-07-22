@@ -21,8 +21,6 @@ terraform {
 provider "aws" {
   region = var.aws_region
 
-  # Every resource this provider creates gets these tags automatically.
-  # One block replaces remembering to tag 60+ resources by hand.
   default_tags {
     tags = {
       Project     = var.project

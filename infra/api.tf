@@ -3,11 +3,9 @@ resource "aws_apigatewayv2_api" "gt" {
   protocol_type = "HTTP"
 
   cors_configuration {
-    # CloudFront's domain is referenced directly: Terraform will create the
-    # distribution first (dependency graph), then configure CORS with its URL.
     allow_origins = [
       "http://localhost:5500",
-      #"https://${aws_cloudfront_distribution.web.domain_name}",
+      "https://${aws_cloudfront_distribution.web.domain_name}",
     ]
     allow_methods = ["GET", "POST", "OPTIONS"]
     allow_headers = ["authorization", "content-type"]
@@ -79,12 +77,10 @@ resource "aws_apigatewayv2_route" "this" {
   route_key = each.key
   target    = "integrations/${aws_apigatewayv2_integration.lambda[each.key].id}"
 
-  # Conditional expression: protected routes get the JWT authorizer, public ones don't.
   authorization_type = each.value.auth ? "JWT" : "NONE"
   authorizer_id      = each.value.auth ? aws_apigatewayv2_authorizer.jwt.id : null
 }
 
-# Resource-based permission so API Gateway may invoke each function:
 resource "aws_lambda_permission" "api_invoke" {
   for_each = local.api_routes
 

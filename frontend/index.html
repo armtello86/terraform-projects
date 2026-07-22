@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Geek Trivia</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>⚡ Geek Trivia</h1>
+    <div id="user-box" class="hidden">
+      <span id="user-name"></span>
+      <button id="btn-logout" class="ghost">Logout</button>
+    </div>
+  </header>
+
+  <div id="qotd-banner" class="card banner hidden">
+    <strong>🌟 Question of the day:</strong> <span id="qotd-text"></span>
+  </div>
+
+  <!-- ===== AUTH VIEW ===== -->
+  <main id="view-auth" class="card">
+    <div class="tabs">
+      <button class="tab active" data-tab="login">Login</button>
+      <button class="tab" data-tab="signup">Sign up</button>
+    </div>
+
+    <form id="form-login" onsubmit="return false;">
+      <input id="login-email" type="email" placeholder="Email" required />
+      <input id="login-pass" type="password" placeholder="Password" required />
+      <button id="btn-login">Enter</button>
+    </form>
+
+    <form id="form-signup" class="hidden" onsubmit="return false;">
+      <input id="su-name" type="text" placeholder="Display name" required />
+      <input id="su-email" type="email" placeholder="Email" required />
+      <input id="su-pass" type="password" placeholder="Password (8+ chars)" required />
+      <button id="btn-signup">Create account</button>
+    </form>
+
+    <form id="form-confirm" class="hidden" onsubmit="return false;">
+      <p>📩 Check your email for the code</p>
+      <input id="conf-code" type="text" placeholder="Verification code" required />
+      <button id="btn-confirm">Confirm</button>
+    </form>
+
+    <p id="auth-msg" class="msg"></p>
+  </main>
+
+  <!-- ===== GAME VIEW ===== -->
+  <main id="view-game" class="card hidden">
+    <div id="category-select">
+      <h2>Pick a category</h2>
+      <div class="cat-grid">
+        <button class="cat" data-cat="aws">☁️ AWS</button>
+        <button class="cat" data-cat="linux">🐧 Linux</button>
+        <button class="cat" data-cat="databases">🗄️ Databases</button>
+      </div>
+      <button id="btn-show-board" class="ghost">🏆 Leaderboard</button>
+    </div>
+
+    <div id="quiz-area" class="hidden">
+      <p id="quiz-progress"></p>
+      <h2 id="quiz-question"></h2>
+      <div id="quiz-options" class="options"></div>
+    </div>
+
+    <div id="result-area" class="hidden">
+      <h2 id="result-text"></h2>
+      <p id="result-status" class="msg"></p>
+      <button id="btn-again">Play again</button>
+      <button id="btn-board2" class="ghost">🏆 Leaderboard</button>
+    </div>
+  </main>
+
+  <!-- ===== LEADERBOARD VIEW ===== -->
+  <main id="view-board" class="card hidden">
+    <h2>🏆 Top 10</h2>
+    <ol id="board-list"></ol>
+    <button id="btn-back" class="ghost">← Back</button>
+  </main>
+
+  <script src="https://unpkg.com/amazon-cognito-identity-js@6.3.12/dist/amazon-cognito-identity.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
