@@ -1,7 +1,7 @@
 resource "aws_ssm_parameter" "questions_table" {
   name  = "/geektrivia/tables/questions"
   type  = "String"
-  value = aws_dynamodb_table.questions.name   
+  value = aws_dynamodb_table.questions.name
 }
 
 resource "aws_ssm_parameter" "scores_table" {
@@ -16,6 +16,6 @@ resource "aws_ssm_parameter" "qotd" {
   value = "{}"
 
   lifecycle {
-    ignore_changes = [value]   # the rotate-qotd lambda rewrites this daily. 
+    ignore_changes = [value] # the rotate-qotd lambda rewrites this daily. 
   }
 }

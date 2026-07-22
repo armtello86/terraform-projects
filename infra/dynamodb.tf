@@ -1,8 +1,8 @@
 resource "aws_dynamodb_table" "questions" {
   name         = "GeekTrivia-Questions"
-  billing_mode = "PAY_PER_REQUEST"  # capacity mode: On-demand
-  hash_key     = "category"         # partition key
-  range_key    = "question_id"      # sort key
+  billing_mode = "PAY_PER_REQUEST" # capacity mode: On-demand
+  hash_key     = "category"        # partition key
+  range_key    = "question_id"     # sort key
 
   attribute {
     name = "category"

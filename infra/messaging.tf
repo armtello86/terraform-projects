@@ -5,7 +5,7 @@ resource "aws_sqs_queue" "scores_dlq" {
 
 resource "aws_sqs_queue" "scores" {
   name                       = "gt-scores-queue"
-  visibility_timeout_seconds = 60   
+  visibility_timeout_seconds = 60
 
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.scores_dlq.arn
