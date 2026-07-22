@@ -26,7 +26,6 @@ resource "aws_sns_topic" "ops" {
   name = "gt-ops-alerts"
 }
 
-# One email subscription per topic, same address, without repeating ourselves:
 resource "aws_sns_topic_subscription" "email" {
   for_each = {
     welcome = aws_sns_topic.welcome.arn

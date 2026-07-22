@@ -25,7 +25,7 @@ module "process_score" {
   runtime       = var.lambda_runtime
   timeout       = 10
 
-  # The managed policy the console attached when you clicked "Add trigger":
+ 
   managed_policy_arns = [
     "arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole"
   ]
@@ -40,7 +40,7 @@ module "process_score" {
   })
 }
 
-# The trigger itself: "SQS, invoke this lambda with batches of up to 10".
+
 resource "aws_lambda_event_source_mapping" "sqs_to_process" {
   event_source_arn = aws_sqs_queue.scores.arn
   function_name    = module.process_score.function_name

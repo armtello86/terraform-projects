@@ -16,6 +16,6 @@ resource "aws_ssm_parameter" "qotd" {
   value = "{}"
 
   lifecycle {
-    ignore_changes = [value] # the rotate-qotd lambda rewrites this daily. 
+    ignore_changes = [value]
   }
 }
