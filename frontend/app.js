@@ -99,7 +99,9 @@ async function loadQotd() {
     // The lambda returns the payload inside "body" as a JSON string — parse it.
     const data = typeof res.body === "string" ? JSON.parse(res.body) : res;
     if (data && data.question) {
-      $("qotd-text").textContent = data.question;
+      // Show the category next to the question so the banner has context.
+      const cat = data.category ? `(${String(data.category).toUpperCase()}) ` : "";
+      $("qotd-text").textContent = cat + data.question;
       show("qotd-banner");   // only reveal the banner when there is a real question
     }
   } catch (_) { /* qotd is optional — silently skip */ }
@@ -197,7 +199,15 @@ $("btn-logout").onclick = signOut;
 $("btn-again").onclick = () => { hide("result-area"); show("category-select"); };
 $("btn-show-board").onclick = loadBoard;
 $("btn-board2").onclick = loadBoard;
-$("btn-back").onclick = () => { hide("view-board"); show("view-game"); show("category-select"); };
+$("btn-back").onclick = () => {
+  // Reset the game view: hide any leftover quiz or result panel from the
+  // previous round, so only the category picker is showing.
+  hide("view-board");
+  hide("quiz-area");
+  hide("result-area");
+  show("view-game");
+  show("category-select");
+};
 
 // On page load: only restore an existing session. QOTD is loaded inside onLogin,
 // so the banner never shows on the login screen.

@@ -28,13 +28,18 @@ def lambda_handler(event, context):
         Key={"pk": "LEADERBOARD", "sk": "GLOBAL"}
     ).get("Item", {}).get("top", [])
 
-    # Keep each user's best score only, then global top N.
+    # Keep the best score per user AND per category, so every category
+    # a player has completed gets its own row on the board.
     best = {}
     for e in list(current) + new_entries:
-        u = e["username"]
-        if u not in best or int(e["score"]) > int(best[u]["score"]):
-            best[u] = e
+        key = (e["username"], e["category"])
+        if key not in best or int(e["score"]) > int(best[key]["score"]):
+            best[key] = e
 
-    top = sorted(best.values(), key=lambda x: int(x["score"]), reverse=True)[:TOP_N]
+    top = sorted(
+        best.values(),
+        key=lambda x: (int(x["score"]), x["date"]),
+        reverse=True,
+    )[:TOP_N]
     table.put_item(Item={"pk": "LEADERBOARD", "sk": "GLOBAL", "top": top})
     return {"updated": True, "entries": len(top)}

@@ -1,0 +1,71 @@
+Architecture Decisions — Geek Trivia
+
+Date: July 2026 · Author: Armando Tello
+
+A serverless trivia game built as a portfolio project.
+
+Tech Stack
+Layer	Service	Role
+1. Delivery	CloudFront + S3 (private, OAC)	Static SPA over HTTPS, cached at the edge
+2. Identity	Cognito User Pool	Sign-up, email verification, JWT issuance
+3. API	API Gateway HTTP API	4 routes, native JWT authorizer, CORS, throttling
+4. Compute	Lambda ×10 (Python 3.14, arm64)	All business logic
+5. Data	DynamoDB ×2 (on-demand) + Streams	Question bank, scores, leaderboard aggregate
+6. Messaging	SQS + DLQ, SNS ×3 topics	Async score ingestion, email notifications
+7. Scheduling	EventBridge rules ×2	Daily question rotation, weekly digest
+8. Config & secrets	SSM Parameter Store + KMS CMK	Table names, QOTD state, encrypted API key
+9. Observability	CloudWatch alarms ×3, dashboard, CloudTrail	Failure detection and audit
+10. IaC	Terraform (AWS provider ~> 6.0), S3 remote state	~60 resources, full rebuild in ~4 min
+
+Cost: ~$1.00–1.50/month. The KMS key is the only fixed charge.
+
+1. Lambda instead of servers
+The short version: I don't want to patch, scale, or pay for idle VMs.
+Lambda is perfect here because a trivia game gets random traffic. With EC2 I'd be burning money 24/7 just to keep a server warm. With Lambda I pay literally $0 when nobody is playing, and the free tier covers the first million requests. I used arm64/Graviton2 because it's ~20% cheaper than x86 for the exact same Python code.
+What I gave up: Cold starts exist, but for a trivia game nobody notices a 100ms delay.
+
+2. DynamoDB on-demand instead of RDS
+The short version: I don't know how many people will play, and I don't want to manage a database.
+DynamoDB on-demand means zero cost at rest and zero capacity planning. I used a single-table design (pk/sk) so both user scores and the leaderboard live in one place. I also turned on DynamoDB Streams so the leaderboard updates itself automatically whenever someone scores — no polling, no cron jobs.
+What I gave up: No SQL joins or complex queries. But for a trivia app, all I need is "get questions by category" and "get the top 10" — both are single operations.
+
+3. HTTP API instead of REST API
+The short version: REST API is 3.5x more expensive and I don't need its extras.
+HTTP API costs ~$1 per million requests vs ~$3.50 for REST. It also has a native JWT authorizer that plugs straight into Cognito, so I don't need a custom Lambda just to check tokens. The only reason to use REST API would be if I needed API keys, caching, or WAF — none of which fit a $1/month budget.
+
+4. SQS between the API and the database
+The short version: If the database hiccups, I don't want to lose someone's score.
+When you finish a round, the API drops your score into an SQS queue and immediately says "got it" (202 Accepted). A separate Lambda picks it up and writes it to DynamoDB. If that write fails, SQS retries automatically. After 3 strikes, the message goes to a Dead Letter Queue (DLQ) and I get an email alarm.
+What I gave up: The leaderboard updates a few seconds later instead of instantly. For a game, that's fine.
+
+5. DynamoDB Streams for the leaderboard
+The short version: I refuse to run a full table scan every time someone opens the leaderboard.
+The naive approach would be to query every score and sort them on every page load. That gets expensive fast. Instead, every new score triggers a Lambda via the stream, which updates a single pre-computed item (LEADERBOARD/GLOBAL). Reading the leaderboard is now one GetItem — basically free.
+The gotcha: The aggregator Lambda writes back to the same table that triggers it. I added a guard clause to ignore LEADERBOARD keys, or it would loop forever.
+
+6. Private S3 + CloudFront OAC instead of a public bucket
+The short version: Public S3 buckets are a red flag in 2026.
+The bucket is completely locked down — Block Public Access is on, no website endpoint, nothing. CloudFront uses Origin Access Control (OAC) to sign every request with SigV4. If someone scans for open buckets, mine doesn't even show up. I also added security headers (HSTS, X-Frame-Options) via a managed CloudFront policy for free.
+What I gave up: I have to invalidate the CloudFront cache after each frontend update. The first 1,000 invalidations/month are free, so I just invalidate /* and move on.
+
+7. Cognito instead of rolling my own auth
+The short version: I am not storing passwords. Ever.
+Cognito handles signup, email verification, password hashing, token issuance, and MFA if I ever need it — all free up to 50,000 users. The frontend uses the Cognito JS SDK with SRP, which means the password never leaves the browser. API Gateway validates the JWT at the edge, so unauthorized requests never even trigger a Lambda.
+What I gave up: The default email sender is capped at ~50 emails/day. For a demo, that's plenty. Production would use SES.
+
+8. SSM Parameter Store + KMS instead of Secrets Manager
+The short version: Secrets Manager charges $0.40 per secret per month. SSM Standard is free.
+I store config (table names, queue URLs) as plain SSM parameters and secrets as SecureStrings encrypted with my own KMS Customer Managed Key. The key costs $1/month — the only fixed cost in the entire project — but it gives me full audit trails in CloudTrail and the ability to rotate it myself.
+The catch: Terraform stores the decrypted value in its state file in plain text. That's why the state lives in a private, versioned S3 bucket and never touches Git.
+
+9. EventBridge instead of a server cron
+The short version: I don't want an EC2 instance running 24/7 just to say "good morning" once a day.
+EventBridge Scheduler triggers two Lambdas: one every day at noon UTC to rotate the "Question of the Day," and one every Monday morning to email the weekly top 3. It creates its own invocation role, supports timezones, and costs pennies.
+
+10. Terraform instead of ClickOps or CloudFormation
+The short version: If I can't rebuild it in 5 minutes, I don't own it.
+Everything — all 10 Lambdas, 2 tables, queues, topics, CDN, alarms — is declared in Terraform. I wrote a reusable lambda_fn module so creating a new function is 8 lines instead of 60. The state lives in S3 with native file locking, so I (or a CI/CD robot) can run terraform apply from anywhere.
+Why not CloudFormation/CDK? Terraform's HCL is portable (works on Azure/GCP too), and it forces me to see every IAM policy explicitly. CDK is great for app developers, but for a Cloud Engineer portfolio, explicit infrastructure code is more transparent.
+The best part: terraform destroy tears it all down in ~3 minutes. terraform apply brings it back in ~4.
+
+
