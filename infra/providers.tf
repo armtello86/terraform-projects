@@ -1,11 +1,17 @@
 terraform {
-  # Minimum versions: fail fast if the environment is wrong.
   required_version = ">= 1.10.0"
+
+  backend "s3" {
+    bucket       = "geek-trivia-tfstate-tello86"
+    key          = "geek-trivia/terraform.tfstate"
+    region       = "us-east-1"
+    use_lockfile = true
+  }
 
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.0" # ~> means: any 6.x, never 7.0 (pessimistic constraint)
+      version = "~> 6.0"
     }
     random = {
       source  = "hashicorp/random"

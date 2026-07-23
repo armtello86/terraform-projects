@@ -71,7 +71,7 @@ resource "aws_lambda_event_source_mapping" "stream_to_leaderboard" {
   event_source_arn  = aws_dynamodb_table.scores.stream_arn
   function_name     = module.update_leaderboard.function_name
   batch_size        = 10
-  starting_position = "LATEST" # streams need this; SQS mappings don't
+  starting_position = "LATEST"
 }
 
 module "cognito_welcome" {

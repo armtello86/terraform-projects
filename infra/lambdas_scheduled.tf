@@ -59,7 +59,6 @@ module "rotate_qotd" {
   })
 }
 
-# Daily question rotation - 12:00 UTC (06:00 CDMX)
 resource "aws_cloudwatch_event_rule" "daily_qotd" {
   name                = "gt-daily-qotd"
   schedule_expression = "cron(0 12 * * ? *)"
@@ -78,7 +77,6 @@ resource "aws_lambda_permission" "events_invoke_rotate" {
   source_arn    = aws_cloudwatch_event_rule.daily_qotd.arn
 }
 
-# Weekly digest - Mondays 15:00 UTC (09:00 CDMX)
 resource "aws_cloudwatch_event_rule" "weekly_digest" {
   name                = "gt-weekly-digest"
   schedule_expression = "cron(0 15 ? * MON *)"

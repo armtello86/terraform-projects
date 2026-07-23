@@ -1,8 +1,8 @@
 resource "aws_dynamodb_table" "questions" {
   name         = "GeekTrivia-Questions"
-  billing_mode = "PAY_PER_REQUEST" # capacity mode: On-demand
-  hash_key     = "category"        # partition key
-  range_key    = "question_id"     # sort key
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "category"
+  range_key    = "question_id"
 
   attribute {
     name = "category"
@@ -21,7 +21,6 @@ resource "aws_dynamodb_table" "scores" {
   hash_key     = "pk"
   range_key    = "sk"
 
-  # The stream feeds the leaderboard aggregator lambda
   stream_enabled   = true
   stream_view_type = "NEW_IMAGE"
 
